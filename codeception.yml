@@ -8,3 +8,11 @@ actor_suffix: Tester
 extensions:
     enabled:
         - Codeception\Extension\RunFailed
+modules:
+    config:
+        Db:
+            dsn: 'mysql:dbname=start_testing_php;host=localhost'
+            user: 'dbuser'
+            password: 'dbpass'
+            dump: tests/codeception/_data/dump.sql
+            populate: true
