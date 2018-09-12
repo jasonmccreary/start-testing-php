@@ -120,4 +120,76 @@ class TaskRepositoryTest extends PHPUnit\Framework\TestCase
 
         $this->assertFalse($actual);
     }
+
+    /**
+     * @test
+     */
+    public function find_by_id_throws_exception()
+    {
+        $this->dbConnection->shouldReceive('prepare')
+            ->with('SELECT * FROM tasks WHERE id = ?')
+            ->andReturn(false);
+
+        $this->dbConnection->shouldReceive('getError')
+            ->andReturn('Exception Found');
+
+        $this->expectException(Exception::class);
+
+        $this->expectExceptionMessage('Exception Found');
+
+        $this->subject->findById(1);
+    }
+
+    /**
+     * @test
+     */
+    public function find_by_id_returns_false_when_statement_cannot_be_executed()
+    {
+        $statement = Mockery::mock('mysqli_stmt_mock');
+        $statement->shouldReceive('bind_param')
+            ->with('i', 1);
+
+        $statement->shouldReceive('execute')
+            ->andReturnFalse();
+
+        $this->dbConnection->shouldReceive('prepare')
+            ->with('SELECT * FROM tasks WHERE id = ?')
+            ->andReturn($statement);
+
+        $actual = $this->subject->findById(1);
+
+        $this->assertFalse($actual);
+    }
+
+    /**
+     * @test
+     */
+    public function find_by_id_returns_the_task_found()
+    {
+        $result = Mockery::spy('mysqli_result_mock');
+
+        $result->shouldReceive('fetch_assoc')
+            ->andReturn(['note' => 'Task 1'], null);
+
+        $statement = Mockery::mock('mysqli_stmt_mock');
+
+        $statement->shouldReceive('execute')
+            ->andReturnTrue();
+
+        $statement->shouldReceive('bind_param')
+            ->with('i', 1);
+
+        $statement->shouldReceive('get_result')
+            ->andReturn($result);
+
+        $this->dbConnection->shouldReceive('prepare')
+            ->with('SELECT * FROM tasks WHERE id = ?')
+            ->andReturn($statement);
+
+        $actual = $this->subject->findById(1);
+
+        $this->assertInstanceOf(Task::class, $actual[0]);
+
+        $this->assertSame('Task 1', $actual[0]->getNote());
+    }
 }

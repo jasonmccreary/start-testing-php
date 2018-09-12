@@ -18,7 +18,7 @@ class TaskRepository
     {
         $result = $this->dbConnection->query('SELECT note FROM tasks ORDER BY created DESC');
 
-        if ($result === false || $result->num_rows === 0) {
+        if (false === $result || 0 === $result->num_rows) {
             return [];
         }
 
@@ -49,5 +49,40 @@ class TaskRepository
         $stmt->close();
 
         return new Task($note);
+    }
+
+    /**
+     * @param $id
+     *
+     * @return array|bool
+     *
+     * @throws Exception
+     */
+    public function findById($id)
+    {
+        $sql = 'SELECT * FROM tasks WHERE id = ?';
+
+        $stmt = $this->dbConnection->prepare($sql);
+
+        if (!$stmt) {
+            throw new Exception($this->dbConnection->getError());
+        }
+
+        $stmt->bind_param('i', $id);
+
+        if (!$stmt->execute()) {
+            return false;
+        }
+
+        $result = $stmt->get_result();
+
+        $tasks = [];
+        while ($data = $result->fetch_assoc()) {
+            $tasks[] = new Task($data['note']);
+        }
+
+        $result->free();
+
+        return $tasks;
     }
 }
