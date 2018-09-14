@@ -192,4 +192,67 @@ class TaskRepositoryTest extends PHPUnit\Framework\TestCase
 
         $this->assertSame('Task 1', $actual[0]->getNote());
     }
+
+    /**
+     * @test
+     */
+    public function update_throws_an_exception()
+    {
+        $this->dbConnection->shouldReceive('prepare')
+            ->with('UPDATE tasks SET note = ? WHERE id = ?')
+            ->andReturnFalse();
+
+        $this->dbConnection->shouldReceive('getError')
+            ->andReturn('Exception Found');
+
+        $this->expectException(Exception::class);
+
+        $this->expectExceptionMessage('Exception Found');
+
+        $this->subject->update('Update Task', 1);
+    }
+
+    /**
+     * @test
+     */
+    public function update_returns_false_when_statement_cannot_be_exceuted()
+    {
+        $statement = Mockery::mock('mysql_stmt_mock');
+
+        $statement->shouldReceive('bind_param')
+            ->with('si', 'Update Task', 1);
+
+        $statement->shouldReceive('execute')
+            ->andReturnFalse();
+
+        $this->dbConnection->shouldReceive('prepare')
+            ->with('UPDATE tasks SET note = ? WHERE id = ?')
+            ->andReturn($statement);
+
+        $actual = $this->subject->update('Update Task', 1);
+
+        $this->assertFalse($actual);
+    }
+
+    /**
+     * @test
+     */
+    public function update_returns_true_when_updated()
+    {
+        $statement = Mockery::mock('mysql_stmt_mock');
+
+        $statement->shouldReceive('bind_param')
+            ->with('si', 'Update Task', 1);
+
+        $statement->shouldReceive('execute')
+            ->andReturnTrue();
+
+        $this->dbConnection->shouldReceive('prepare')
+            ->with('UPDATE tasks SET note = ? WHERE id = ?')
+            ->andReturn($statement);
+
+        $actual = $this->subject->update('Update Task', 1);
+
+        $this->assertTrue($actual);
+    }
 }

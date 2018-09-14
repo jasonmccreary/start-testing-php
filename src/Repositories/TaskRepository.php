@@ -85,4 +85,30 @@ class TaskRepository
 
         return $tasks;
     }
+
+    /**
+     * @param $note
+     * @param $id
+     *
+     * @return bool
+     *
+     * @throws Exception
+     */
+    public function update($note, $id)
+    {
+        $sql = 'UPDATE tasks SET note = ? WHERE id = ?';
+        $stmt = $this->dbConnection->prepare($sql);
+
+        if (!$stmt) {
+            throw new Exception($this->dbConnection->getError());
+        }
+
+        $stmt->bind_param('si', $note, $id);
+
+        if (!$stmt->execute()) {
+            return false;
+        }
+
+        return true;
+    }
 }
